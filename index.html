@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Space Invaders - Bluey Edition</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+            background: #1a1a1a;
+        }
+        #game-over {
+            text-align: center;
+            margin: 20px;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            display: none;
+        }
+        body {
+            background: #000;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-over">
+        <h2 id="game-over-text"></h2>
+        <button onclick="resetGame()">Play Again</button>
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const playerName = "Reggie"; // Hardcoded player name
+        let player = {
+            x: canvas.width/2 - 25,
+            y: canvas.height - 50,
+            width: 50,
+            height: 20,
+            speed: 5,
+            dx: 0,
+            lives: 3
+        };
+        
+        let bullets = [];
+        let invaders = [];
+        let score = 0;
+        let gameRunning = true; // Start immediately
+        let invaderSpeed = 1;
+        let invaderDirection = 1;
+
+        // Bluey character names for invaders
+        const blueyCharacters = [
+            "Bluey",
+            "Bingo",
+            "Bandit",
+            "Chilli",
+            "Muffin",
+            "Socks",
+            "Lucky",
+            "Judo",
+            "Rusty",
+            "Coco"
+        ];
+
+        // Create invaders with random Bluey character names
+        function createInvaders() {
+            invaders = [];
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 8; j++) {
+                    invaders.push({
+                        x: j * 80 + 50,
+                        y: i * 50 + 50,
+                        width: 40,
+                        height: 30,
+                        alive: true,
+                        name: blueyCharacters[Math.floor(Math.random() * blueyCharacters.length)]
+                    });
+                }
+            }
+        }
+
+        // Draw player ship
+        function drawPlayer(x, y) {
+            ctx.fillStyle = '#00ff00';
+            ctx.beginPath();
+            ctx.moveTo(x + 25, y);
+            ctx.lineTo(x, y + 20);
+            ctx.lineTo(x + 50, y + 20);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.fillText(playerName, x, y - 10);
+        }
+
+        // Draw invader
+        function drawInvader(x, y, name) {
+            ctx.fillStyle = '#ff00ff';
+            ctx.beginPath();
+            ctx.moveTo(x + 20, y);
+            ctx.lineTo(x, y + 20);
+            ctx.lineTo(x + 10, y + 10);
+            ctx.lineTo(x + 30, y + 10);
+            ctx.lineTo(x + 40, y + 20);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.fillText(name, x, y - 5);
+        }
+
+        // Draw everything
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlayer(player.x, player.y);
+
+            ctx.fillStyle = '#ff4444';
+            bullets.forEach(bullet => {
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+            });
+
+            invaders.forEach(invader => {
+                if (invader.alive) {
+                    drawInvader(invader.x, invader.y, invader.name);
+                }
+            });
+
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: ${score}`, 10, 25);
+            ctx.fillText(`Lives: ${player.lives}`, canvas.width - 100, 25);
+        }
+
+        // Update game state
+        function update() {
+            if (!gameRunning) return;
+
+            player.x += player.dx;
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            bullets.forEach((bullet, index) => {
+                bullet.y -= 5;
+                if (bullet.y < 0) bullets.splice(index, 1);
+
+                invaders.forEach((invader, invIndex) => {
+                    if (invader.alive && 
+                        bullet.x < invader.x + invader.width &&
+                        bullet.x + bullet.width > invader.x &&
+                        bullet.y < invader.y + invader.height &&
+                        bullet.y + bullet.height > invader.y) {
+                        invader.alive = false;
+                        bullets.splice(index, 1);
+                        score += 10;
+                    }
+                });
+            });
+
+            let edgeReached = false;
+            invaders.forEach(invader => {
+                if (invader.alive) {
+                    invader.x += invaderSpeed * invaderDirection;
+                    if (invader.x <= 0 || invader.x + invader.width >= canvas.width) {
+                        edgeReached = true;
+                    }
+                    if (invader.y + invader.height >= player.y) {
+                        player.lives--;
+                    }
+                }
+            });
+
+            if (edgeReached) {
+                invaderDirection *= -1;
+                invaders.forEach(invader => {
+                    if (invader.alive) invader.y += 20;
+                });
+                invaderSpeed += 0.2;
+            }
+
+            const aliveInvaders = invaders.filter(i => i.alive).length;
+            if (aliveInvaders === 0) {
+                endGame(true);
+                return;
+            }
+            if (player.lives <= 0) {
+                endGame(false);
+                return;
+            }
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        // Controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') player.dx = -player.speed;
+            if (e.key === 'ArrowRight') player.dx = player.speed;
+            if (e.key === ' ' && gameRunning) {
+                bullets.push({
+                    x: player.x + player.width/2 - 2,
+                    y: player.y,
+                    width: 4,
+                    height: 10
+                });
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
+        });
+
+        // End game
+        function endGame(won) {
+            gameRunning = false;
+            document.getElementById('game-over').style.display = 'block';
+            document.getElementById('game-over-text').textContent = 
+                won ? `Victory ${playerName}! Score: ${score}` : 
+                      `Game Over ${playerName}! Score: ${score}`;
+        }
+
+        // Reset game
+        function resetGame() {
+            document.getElementById('game-over').style.display = 'none';
+            player.lives = 3;
+            score = 0;
+            invaderSpeed = 1;
+            invaderDirection = 1;
+            player.x = canvas.width/2 - 25;
+            bullets = [];
+            gameRunning = true;
+            createInvaders();
+            update();
+        }
+
+        // Start game immediately
+        createInvaders();
+        update();
+    </script>
+</body>
+</html>
