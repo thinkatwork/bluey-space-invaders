@@ -222,4 +222,55 @@
             score = 0;
             invaderSpeed = 1;
             invaderDirection = 1;
-            player.x = canvas
+            player.x = canvas.width/2 - 25;
+            bullets = [];
+            gameRunning = true;
+            createInvaders();
+            update();
+        }
+
+        // Touch controls
+        const leftBtn = document.getElementById('left-btn');
+        const rightBtn = document.getElementById('right-btn');
+        const shootBtn = document.getElementById('shoot-btn');
+
+        leftBtn.addEventListener('touchstart', () => player.dx = -player.speed);
+        leftBtn.addEventListener('touchend', () => player.dx = 0);
+        rightBtn.addEventListener('touchstart', () => player.dx = player.speed);
+        rightBtn.addEventListener('touchend', () => player.dx = 0);
+        shootBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameRunning) {
+                bullets.push({
+                    x: player.x + player.width/2 - 2,
+                    y: player.y,
+                    width: 4,
+                    height: 10
+                });
+            }
+        });
+
+        // Keyboard controls (optional)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') player.dx = -player.speed;
+            if (e.key === 'ArrowRight') player.dx = player.speed;
+            if (e.key === ' ' && gameRunning) {
+                bullets.push({
+                    x: player.x + player.width/2 - 2,
+                    y: player.y,
+                    width: 4,
+                    height: 10
+                });
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
+        });
+
+        // Start game
+        createInvaders();
+        update();
+    </script>
+</body>
+</html>
