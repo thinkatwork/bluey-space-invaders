@@ -43,6 +43,7 @@ canvas {
     border-radius: 10px;
     z-index: 9999;
     min-width: 300px;
+    pointer-events: auto;
 }
 
 .hidden {
@@ -58,8 +59,11 @@ canvas {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    width: 200px;
+    width: 200px !important;
     touch-action: manipulation;
+    pointer-events: auto;
+    position: relative;
+    z-index: 10000;
 }
 
 #play-again-btn:active {

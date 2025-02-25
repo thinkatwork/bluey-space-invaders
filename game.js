@@ -38,12 +38,19 @@ class Game {
     }
 
     setupEventListeners() {
-        // Play Again button
-        this.playAgainBtn.addEventListener('click', () => this.resetGame());
-        this.playAgainBtn.addEventListener('touchstart', (e) => {
+        // Play Again button - remove existing listeners and add new ones
+        this.playAgainBtn.replaceWith(this.playAgainBtn.cloneNode(true));
+        this.playAgainBtn = document.getElementById('play-again-btn'); // Get fresh reference
+        
+        const handlePlayAgain = (e) => {
             e.preventDefault();
+            e.stopPropagation();
+            console.log('Play Again clicked/touched');
             this.resetGame();
-        });
+        };
+
+        this.playAgainBtn.addEventListener('click', handlePlayAgain, { capture: true });
+        this.playAgainBtn.addEventListener('touchstart', handlePlayAgain, { capture: true });
 
         // Touch Controls
         const leftBtn = document.getElementById('left-btn');
@@ -84,39 +91,63 @@ class Game {
 
     resetGame() {
         console.log('Reset game called');
+        
+        // Hide game over screen first
+        this.gameOverDiv.classList.add('hidden');
+        
+        // Reset all game state
         this.gameRunning = true;
         this.score = 0;
         this.player.lives = 3;
         this.invaderSpeed = 1;
         this.invaderDirection = 1;
         this.bullets = [];
+        this.lastTime = 0;
         
+        // Reset positions
+        this.player.x = this.canvas.width/2 - this.player.width/2;
+        this.player.y = this.canvas.height - 50;
+        this.player.dx = 0;
+        
+        // Create new invaders
         this.createInvaders();
-        this.resizeCanvas();
         
-        this.gameOverDiv.classList.add('hidden');
-        
+        // Cancel existing game loop if any
         if (this.gameLoopId) {
             cancelAnimationFrame(this.gameLoopId);
+            this.gameLoopId = null;
         }
+        
+        // Start new game loop
         this.startGameLoop();
+        
+        // Force a redraw
+        this.draw();
     }
 
     endGame(won) {
         this.gameRunning = false;
+        
+        // Stop the game loop
+        if (this.gameLoopId) {
+            cancelAnimationFrame(this.gameLoopId);
+            this.gameLoopId = null;
+        }
+        
+        // Clear any movement
         this.player.dx = 0;
         this.bullets = [];
         
+        // Update and show game over screen
         this.gameOverText.textContent = won ? 
             `Well Done ${this.playerName}!!! Score: ${this.score}` : 
             `Game Over ${this.playerName}! Score: ${this.score}`;
         
         this.gameOverDiv.classList.remove('hidden');
         
-        if (this.gameLoopId) {
-            cancelAnimationFrame(this.gameLoopId);
-            this.gameLoopId = null;
-        }
+        // Ensure the button is clickable
+        this.playAgainBtn.style.pointerEvents = 'auto';
+        console.log('Game Over screen shown');
     }
 
     createPlayer() {
