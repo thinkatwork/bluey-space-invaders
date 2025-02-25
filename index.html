@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html> 
 <head>
     <title>Space Invaders - Bluey Edition</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -52,6 +52,13 @@
             border-radius: 5px;
             cursor: pointer;
             width: auto;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        #game-over button:active {
+            background: #45a049;
+            transform: scale(0.98);
         }
         #controls {
             position: fixed;
@@ -82,7 +89,7 @@
 <body>
     <div id="game-over">
         <h2 id="game-over-text"></h2>
-        <button onclick="resetGame()">Play Again</button>
+        <button>Play Again</button>
     </div>
     <canvas id="gameCanvas"></canvas>
     <div id="controls">
@@ -286,11 +293,15 @@
             score = 0;
             invaderSpeed = 1;
             invaderDirection = 1;
-            player.x = canvas.width/2 - 25;
+            player.x = canvas.width/2 - player.width/2;
+            player.y = canvas.height - 50;
             bullets = [];
-            gameRunning = true;
             createInvaders();
+            gameRunning = true;
             lastTime = 0;
+            
+            // Force a canvas resize to ensure proper positioning
+            resizeCanvas();
         }
 
         // Touch controls
@@ -351,6 +362,15 @@
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
+        });
+
+        // Replace the inline onclick handler with an event listener
+        document.querySelector('#game-over button').addEventListener('click', resetGame);
+        
+        // Add touch event listener for mobile
+        document.querySelector('#game-over button').addEventListener('touchend', (e) => {
+            e.preventDefault();
+            resetGame();
         });
 
         // Start game
