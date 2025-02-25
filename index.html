@@ -2,39 +2,34 @@
 <html>
 <head>
     <title>Space Invaders - Bluey Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            height: 100%;
+            overflow: hidden; /* Prevent any scrolling */
+        }
+        body {
             background: #000;
             display: flex;
             flex-direction: column;
             align-items: center;
             font-family: Arial, sans-serif;
             color: #fff;
-            overflow-x: hidden;
+            touch-action: none; /* Disable pinch/scroll globally */
         }
         canvas {
             border: 1px solid black;
             background: #1a1a1a;
-            max-width: 100%;
+            width: 100%;
+            max-width: 800px;
+            height: auto;
         }
         #game-over {
             text-align: center;
             margin: 20px;
             display: none;
-        }
-        button {
-            padding: 15px 30px;
-            font-size: 18px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            touch-action: manipulation;
-        }
-        button:active {
-            background: #555;
         }
         #controls {
             margin-top: 10px;
@@ -43,6 +38,19 @@
             width: 100%;
             max-width: 800px;
         }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            touch-action: manipulation; /* Isolate touch to buttons */
+            width: 30%; /* Ensure buttons are wide enough */
+        }
+        button:active {
+            background: #555;
+        }
     </style>
 </head>
 <body>
@@ -50,7 +58,7 @@
         <h2 id="game-over-text"></h2>
         <button onclick="resetGame()">Play Again</button>
     </div>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <div id="controls">
         <button id="left-btn">Left</button>
         <button id="right-btn">Right</button>
@@ -63,8 +71,8 @@
 
         const playerName = "Reggie";
         let player = {
-            x: canvas.width/2 - 25,
-            y: canvas.height - 50,
+            x: 0,
+            y: 0,
             width: 50,
             height: 20,
             speed: 5,
@@ -78,11 +86,25 @@
         let gameRunning = true;
         let invaderSpeed = 1;
         let invaderDirection = 1;
+        let lastTime = 0;
+        const targetFPS = 60;
+        const frameTime = 1000 / targetFPS;
 
         const blueyCharacters = [
             "Bluey", "Bingo", "Bandit", "Chilli", "Muffin",
             "Socks", "Lucky", "Judo", "Rusty", "Coco"
         ];
+
+        function resizeCanvas() {
+            const maxWidth = Math.min(window.innerWidth, 800);
+            const aspectRatio = 600 / 800;
+            canvas.width = maxWidth;
+            canvas.height = maxWidth * aspectRatio;
+            player.x = canvas.width / 2 - 25;
+            player.y = canvas.height - 50;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
         function createInvaders() {
             invaders = [];
@@ -149,15 +171,19 @@
             ctx.fillText(`Lives: ${player.lives}`, canvas.width - 100, 25);
         }
 
-        function update() {
+        function update(delta) {
             if (!gameRunning) return;
 
-            player.x += player.dx;
-            if (player.x < 0) player.x = 0;
-            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+            const deltaTime = delta / 1000;
+
+            // Smooth movement with edge damping
+            const nextX = player.x + player.dx * deltaTime * 60;
+            if (nextX >= 0 && nextX + player.width <= canvas.width) {
+                player.x = nextX; // Only update if within bounds
+            }
 
             bullets.forEach((bullet, index) => {
-                bullet.y -= 5;
+                bullet.y -= 5 * deltaTime * 60;
                 if (bullet.y < 0) bullets.splice(index, 1);
 
                 invaders.forEach((invader, invIndex) => {
@@ -176,7 +202,7 @@
             let edgeReached = false;
             invaders.forEach(invader => {
                 if (invader.alive) {
-                    invader.x += invaderSpeed * invaderDirection;
+                    invader.x += invaderSpeed * invaderDirection * deltaTime * 60;
                     if (invader.x <= 0 || invader.x + invader.width >= canvas.width) {
                         edgeReached = true;
                     }
@@ -195,17 +221,20 @@
             }
 
             const aliveInvaders = invaders.filter(i => i.alive).length;
-            if (aliveInvaders === 0) {
-                endGame(true);
-                return;
-            }
-            if (player.lives <= 0) {
-                endGame(false);
-                return;
-            }
+            if (aliveInvaders === 0) endGame(true);
+            if (player.lives <= 0) endGame(false);
+        }
 
-            draw();
-            requestAnimationFrame(update);
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const delta = Math.min(timestamp - lastTime, 100);
+            lastTime = timestamp;
+
+            if (gameRunning) {
+                update(delta);
+                draw();
+            }
+            requestAnimationFrame(gameLoop);
         }
 
         function endGame(won) {
@@ -226,41 +255,60 @@
             bullets = [];
             gameRunning = true;
             createInvaders();
-            update();
+            lastTime = 0;
         }
 
         // Touch controls
         const leftBtn = document.getElementById('left-btn');
         const rightBtn = document.getElementById('right-btn');
         const shootBtn = document.getElementById('shoot-btn');
+        let shootCooldown = 0;
 
-        leftBtn.addEventListener('touchstart', () => player.dx = -player.speed);
-        leftBtn.addEventListener('touchend', () => player.dx = 0);
-        rightBtn.addEventListener('touchstart', () => player.dx = player.speed);
-        rightBtn.addEventListener('touchend', () => player.dx = 0);
+        leftBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            player.dx = -player.speed;
+        }, { passive: false });
+        leftBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            player.dx = 0;
+        }, { passive: false });
+        rightBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            player.dx = player.speed;
+        }, { passive: false });
+        rightBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            player.dx = 0;
+        }, { passive: false });
         shootBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            if (gameRunning) {
+            if (gameRunning && shootCooldown <= 0) {
                 bullets.push({
                     x: player.x + player.width/2 - 2,
                     y: player.y,
                     width: 4,
                     height: 10
                 });
+                shootCooldown = 200;
             }
-        });
+        }, { passive: false });
+
+        setInterval(() => {
+            if (shootCooldown > 0) shootCooldown -= frameTime;
+        }, frameTime);
 
         // Keyboard controls (optional)
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') player.dx = -player.speed;
             if (e.key === 'ArrowRight') player.dx = player.speed;
-            if (e.key === ' ' && gameRunning) {
+            if (e.key === ' ' && gameRunning && shootCooldown <= 0) {
                 bullets.push({
                     x: player.x + player.width/2 - 2,
                     y: player.y,
                     width: 4,
                     height: 10
                 });
+                shootCooldown = 200;
             }
         });
 
@@ -270,7 +318,7 @@
 
         // Start game
         createInvaders();
-        update();
+        requestAnimationFrame(gameLoop);
     </script>
 </body>
 </html>
