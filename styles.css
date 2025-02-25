@@ -92,4 +92,19 @@ canvas {
 
 .control-btn:active {
     background: #555;
+}
+
+button {
+    padding: 15px 30px;
+    font-size: 18px;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    touch-action: manipulation;
+    width: 30%;
+}
+
+button:active {
+    background: #555;
 } 
