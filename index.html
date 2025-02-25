@@ -8,16 +8,19 @@
             margin: 0;
             padding: 0;
             height: 100%;
-            overflow: hidden; /* Prevent any scrolling */
+            overflow: hidden;
+            width: 100%;
+            position: fixed; /* Prevent mobile browser bars from affecting layout */
         }
         body {
             background: #000;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center; /* Center content vertically */
             font-family: Arial, sans-serif;
             color: #fff;
-            touch-action: none; /* Disable pinch/scroll globally */
+            touch-action: none;
         }
         canvas {
             border: 1px solid black;
@@ -25,18 +28,41 @@
             width: 100%;
             max-width: 800px;
             height: auto;
+            touch-action: none;
         }
         #game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             text-align: center;
-            margin: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
             display: none;
         }
+        #game-over button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: auto;
+        }
         #controls {
-            margin-top: 10px;
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
             display: flex;
             justify-content: space-around;
-            width: 100%;
+            padding: 0 10px;
             max-width: 800px;
+            margin: 0 auto;
         }
         button {
             padding: 15px 30px;
@@ -96,12 +122,21 @@
         ];
 
         function resizeCanvas() {
-            const maxWidth = Math.min(window.innerWidth, 800);
-            const aspectRatio = 600 / 800;
-            canvas.width = maxWidth;
-            canvas.height = maxWidth * aspectRatio;
-            player.x = canvas.width / 2 - 25;
+            canvas.width = Math.min(window.innerWidth, 800);
+            canvas.height = Math.min(window.innerHeight - 150, canvas.width * 0.75); // Leave space for controls
+            player.x = canvas.width / 2 - player.width / 2;
             player.y = canvas.height - 50;
+            
+            // Reposition invaders if they exist
+            if (invaders.length > 0) {
+                const invaderSpacing = canvas.width / 10;
+                invaders.forEach((invader, index) => {
+                    const row = Math.floor(index / 5);
+                    const col = index % 5;
+                    invader.x = col * invaderSpacing + invaderSpacing;
+                    invader.y = row * 50 + 50;
+                });
+            }
         }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
@@ -267,19 +302,11 @@
         leftBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             player.dx = -player.speed;
-        }, { passive: false });
-        leftBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            player.dx = 0;
-        }, { passive: false });
+        });
         rightBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             player.dx = player.speed;
-        }, { passive: false });
-        rightBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            player.dx = 0;
-        }, { passive: false });
+        });
         shootBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
             if (gameRunning && shootCooldown <= 0) {
@@ -291,6 +318,16 @@
                 });
                 shootCooldown = 200;
             }
+        });
+
+        document.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            player.dx = 0;
+        }, { passive: false });
+
+        // Prevent default touch behaviors
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
         }, { passive: false });
 
         setInterval(() => {
