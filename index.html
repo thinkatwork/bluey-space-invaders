@@ -88,12 +88,36 @@
         button:active {
             background: #555;
         }
+        #play-again-btn {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 80%;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            z-index: 1001; /* Ensure it's above other elements */
+            position: relative; /* Enable z-index */
+            pointer-events: auto; /* Ensure clicks are captured */
+        }
+        #play-again-btn:active {
+            background: #45a049;
+            transform: scale(0.98);
+        }
     </style>
 </head>
 <body>
     <div id="game-over">
         <h2 id="game-over-text"></h2>
-        <button>Play Again</button>
+        <button id="play-again-btn">Play Again</button>
     </div>
     <canvas id="gameCanvas"></canvas>
     <div id="controls">
@@ -290,22 +314,32 @@
 
         function endGame(won) {
             gameRunning = false;
-            const gameOverDiv = document.getElementById('game-over');
-            const gameOverText = document.getElementById('game-over-text');
             
+            // Clear any existing movement and bullets
+            player.dx = 0;
+            bullets = [];
+            
+            // Update game over text
+            const gameOverText = document.getElementById('game-over-text');
             gameOverText.textContent = won ? 
                 `Well Done ${playerName}!!! Score: ${score}` : 
                 `Game Over ${playerName}! Score: ${score}`;
             
+            // Show game over screen
+            const gameOverDiv = document.getElementById('game-over');
             gameOverDiv.style.display = 'block';
             
-            // Clear any existing movement
-            player.dx = 0;
-            bullets = [];
+            // Ensure the Play Again button is visible and clickable
+            const playAgainBtn = document.getElementById('play-again-btn');
+            playAgainBtn.style.display = 'block';
+            playAgainBtn.style.pointerEvents = 'auto';
         }
 
         function resetGame() {
-            // Clear the game state
+            // First hide the game over screen
+            document.getElementById('game-over').style.display = 'none';
+            
+            // Reset all game variables
             gameRunning = true;
             bullets = [];
             invaders = [];
@@ -321,16 +355,13 @@
             player.y = canvas.height - 50;
             player.dx = 0;
             
-            // Hide game over screen
-            document.getElementById('game-over').style.display = 'none';
-            
             // Create new invaders
             createInvaders();
             
             // Force a redraw
             draw();
             
-            // Ensure the game loop is running
+            // Restart game loop if needed
             if (!gameRunning) {
                 requestAnimationFrame(gameLoop);
             }
@@ -396,23 +427,27 @@
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
         });
 
-        // Remove existing event listeners and add new ones
-        const playAgainBtn = document.querySelector('#game-over button');
+        // Remove all previous event listeners and add new ones
+        const playAgainBtn = document.getElementById('play-again-btn');
         
-        // Remove any existing listeners (if any)
-        const newPlayAgainBtn = playAgainBtn.cloneNode(true);
-        playAgainBtn.parentNode.replaceChild(newPlayAgainBtn, playAgainBtn);
+        // Clear any existing listeners
+        playAgainBtn.replaceWith(playAgainBtn.cloneNode(true));
         
-        // Add new listeners
-        newPlayAgainBtn.addEventListener('click', (e) => {
+        // Get the fresh button reference
+        const freshPlayAgainBtn = document.getElementById('play-again-btn');
+        
+        // Add both click and touch handlers
+        freshPlayAgainBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Play Again clicked'); // Debug log
             resetGame();
         });
 
-        newPlayAgainBtn.addEventListener('touchend', (e) => {
+        freshPlayAgainBtn.addEventListener('touchstart', function(e) {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Play Again touched'); // Debug log
             resetGame();
         });
 
