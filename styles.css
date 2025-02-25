@@ -1,0 +1,95 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: fixed;
+}
+
+body {
+    background: #000;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    touch-action: none;
+}
+
+#game-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+canvas {
+    border: 1px solid black;
+    background: #1a1a1a;
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    touch-action: none;
+}
+
+#game-over {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    background: rgba(0, 0, 0, 0.95);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 9999;
+    min-width: 300px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#play-again-btn {
+    margin-top: 20px;
+    padding: 15px 30px;
+    font-size: 18px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 200px;
+    touch-action: manipulation;
+}
+
+#play-again-btn:active {
+    background: #45a049;
+    transform: scale(0.98);
+}
+
+#controls {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-around;
+    padding: 0 10px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.control-btn {
+    padding: 15px 30px;
+    font-size: 18px;
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    touch-action: manipulation;
+    width: 30%;
+}
+
+.control-btn:active {
+    background: #555;
+} 
