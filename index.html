@@ -36,11 +36,12 @@
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9); /* Make background more opaque */
             padding: 20px;
             border-radius: 10px;
             z-index: 1000;
             display: none;
+            min-width: 200px; /* Ensure minimum width */
         }
         #game-over button {
             margin-top: 20px;
@@ -51,10 +52,13 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            width: auto;
+            width: 80%; /* Make button wider */
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
+            display: block; /* Make button block level */
+            margin-left: auto;
+            margin-right: auto;
         }
         #game-over button:active {
             background: #45a049;
@@ -150,10 +154,15 @@
 
         function createInvaders() {
             invaders = [];
-            for (let i = 0; i < 5; i++) {
-                for (let j = 0; j < 8; j++) {
+            const columns = 8;
+            const rows = 5;
+            const spacing = canvas.width / (columns + 2); // Add padding on sides
+            const startX = spacing; // Start after first spacing unit
+            
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < columns; j++) {
                     invaders.push({
-                        x: j * 80 + 50,
+                        x: startX + j * spacing,
                         y: i * 50 + 50,
                         width: 40,
                         height: 30,
@@ -281,27 +290,50 @@
 
         function endGame(won) {
             gameRunning = false;
-            document.getElementById('game-over').style.display = 'block';
-            document.getElementById('game-over-text').textContent = 
-                won ? `Well Done Reggie!!! Score: ${score}` : 
-                      `Game Over ${playerName}! Score: ${score}`;
+            const gameOverDiv = document.getElementById('game-over');
+            const gameOverText = document.getElementById('game-over-text');
+            
+            gameOverText.textContent = won ? 
+                `Well Done ${playerName}!!! Score: ${score}` : 
+                `Game Over ${playerName}! Score: ${score}`;
+            
+            gameOverDiv.style.display = 'block';
+            
+            // Clear any existing movement
+            player.dx = 0;
+            bullets = [];
         }
 
         function resetGame() {
-            document.getElementById('game-over').style.display = 'none';
-            player.lives = 3;
+            // Clear the game state
+            gameRunning = true;
+            bullets = [];
+            invaders = [];
             score = 0;
             invaderSpeed = 1;
             invaderDirection = 1;
+            player.lives = 3;
+            lastTime = 0;
+            shootCooldown = 0;
+            
+            // Reset player position
             player.x = canvas.width/2 - player.width/2;
             player.y = canvas.height - 50;
-            bullets = [];
-            createInvaders();
-            gameRunning = true;
-            lastTime = 0;
+            player.dx = 0;
             
-            // Force a canvas resize to ensure proper positioning
-            resizeCanvas();
+            // Hide game over screen
+            document.getElementById('game-over').style.display = 'none';
+            
+            // Create new invaders
+            createInvaders();
+            
+            // Force a redraw
+            draw();
+            
+            // Ensure the game loop is running
+            if (!gameRunning) {
+                requestAnimationFrame(gameLoop);
+            }
         }
 
         // Touch controls
@@ -364,12 +396,23 @@
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
         });
 
-        // Replace the inline onclick handler with an event listener
-        document.querySelector('#game-over button').addEventListener('click', resetGame);
+        // Remove existing event listeners and add new ones
+        const playAgainBtn = document.querySelector('#game-over button');
         
-        // Add touch event listener for mobile
-        document.querySelector('#game-over button').addEventListener('touchend', (e) => {
+        // Remove any existing listeners (if any)
+        const newPlayAgainBtn = playAgainBtn.cloneNode(true);
+        playAgainBtn.parentNode.replaceChild(newPlayAgainBtn, playAgainBtn);
+        
+        // Add new listeners
+        newPlayAgainBtn.addEventListener('click', (e) => {
             e.preventDefault();
+            e.stopPropagation();
+            resetGame();
+        });
+
+        newPlayAgainBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             resetGame();
         });
 
