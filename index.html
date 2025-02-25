@@ -41,6 +41,7 @@
             border-radius: 10px;
             z-index: 9999;
             display: none;
+            min-width: 300px;
         }
         #play-again-btn {
             margin-top: 20px;
@@ -53,6 +54,12 @@
             cursor: pointer;
             width: 200px;
             touch-action: manipulation;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #play-again-btn:active {
+            background: #45a049;
         }
         #controls {
             position: fixed;
@@ -83,7 +90,7 @@
 <body>
     <div id="game-over">
         <h2 id="game-over-text">Game Over</h2>
-        <button onclick="resetGame()" id="play-again-btn">Play-Again</button>
+        <button type="button" id="play-again-btn">Play Again</button>
     </div>
     <canvas id="gameCanvas"></canvas>
     <div id="controls">
@@ -266,18 +273,6 @@
             if (player.lives <= 0) endGame(false);
         }
 
-        function gameLoop(timestamp) {
-            if (!lastTime) lastTime = timestamp;
-            const delta = Math.min(timestamp - lastTime, 100);
-            lastTime = timestamp;
-
-            if (gameRunning) {
-                update(delta);
-                draw();
-            }
-            requestAnimationFrame(gameLoop);
-        }
-
         function endGame(won) {
             gameRunning = false;
             player.dx = 0;
@@ -291,10 +286,13 @@
                 `Game Over ${playerName}! Score: ${score}`;
             
             gameOverDiv.style.display = 'block';
+            
+            // Stop the game loop
+            cancelAnimationFrame(gameLoopId);
         }
 
         function resetGame() {
-            console.log('resetGame called'); // Debug log
+            console.log('resetGame called');
             
             // Reset game state
             gameRunning = true;
@@ -304,6 +302,7 @@
             invaderDirection = 1;
             bullets = [];
             invaders = [];
+            lastTime = 0;
             
             // Reset positions
             player.x = canvas.width/2 - player.width/2;
@@ -316,11 +315,8 @@
             // Create new invaders
             createInvaders();
             
-            // Force a redraw
-            draw();
-            
-            // Request next frame
-            requestAnimationFrame(gameLoop);
+            // Start new game loop
+            gameLoopId = requestAnimationFrame(gameLoop);
         }
 
         // Touch controls
@@ -381,6 +377,37 @@
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
+        });
+
+        // Add this near the top of your script section with other constants
+        const playAgainBtn = document.getElementById('play-again-btn');
+        
+        // Add gameLoopId variable at the top with other variables
+        let gameLoopId;
+
+        // Update the gameLoop function
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const delta = Math.min(timestamp - lastTime, 100);
+            lastTime = timestamp;
+
+            if (gameRunning) {
+                update(delta);
+                draw();
+                gameLoopId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Add this event listener after the resetGame function
+        playAgainBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            resetGame();
+        });
+
+        // Add touch event for mobile
+        playAgainBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            resetGame();
         });
 
         // Start game
