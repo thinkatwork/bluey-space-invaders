@@ -24,13 +24,6 @@
             margin: 20px;
             display: none;
         }
-        #controls {
-            margin-top: 10px;
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            max-width: 800px;
-        }
         button {
             padding: 15px 30px;
             font-size: 18px;
@@ -38,10 +31,17 @@
             color: #fff;
             border: none;
             border-radius: 5px;
-            touch-action: manipulation; /* Prevents zooming on touch */
+            touch-action: manipulation;
         }
         button:active {
             background: #555;
+        }
+        #controls {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 800px;
         }
     </style>
 </head>
@@ -212,7 +212,7 @@
             gameRunning = false;
             document.getElementById('game-over').style.display = 'block';
             document.getElementById('game-over-text').textContent = 
-                won ? `Victory ${playerName}! Score: ${score}` : 
+                won ? `Well Done Reggie!!! Score: ${score}` : 
                       `Game Over ${playerName}! Score: ${score}`;
         }
 
@@ -222,55 +222,4 @@
             score = 0;
             invaderSpeed = 1;
             invaderDirection = 1;
-            player.x = canvas.width/2 - 25;
-            bullets = [];
-            gameRunning = true;
-            createInvaders();
-            update();
-        }
-
-        // Touch controls
-        const leftBtn = document.getElementById('left-btn');
-        const rightBtn = document.getElementById('right-btn');
-        const shootBtn = document.getElementById('shoot-btn');
-
-        leftBtn.addEventListener('touchstart', () => player.dx = -player.speed);
-        leftBtn.addEventListener('touchend', () => player.dx = 0);
-        rightBtn.addEventListener('touchstart', () => player.dx = player.speed);
-        rightBtn.addEventListener('touchend', () => player.dx = 0);
-        shootBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // Prevent scrolling
-            if (gameRunning) {
-                bullets.push({
-                    x: player.x + player.width/2 - 2,
-                    y: player.y,
-                    width: 4,
-                    height: 10
-                });
-            }
-        });
-
-        // Optional: Keep keyboard controls for desktop
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') player.dx = -player.speed;
-            if (e.key === 'ArrowRight') player.dx = player.speed;
-            if (e.key === ' ' && gameRunning) {
-                bullets.push({
-                    x: player.x + player.width/2 - 2,
-                    y: player.y,
-                    width: 4,
-                    height: 10
-                });
-            }
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
-        });
-
-        // Start game
-        createInvaders();
-        update();
-    </script>
-</body>
-</html>
+            player.x = canvas
